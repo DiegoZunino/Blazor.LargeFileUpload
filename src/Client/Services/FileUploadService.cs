@@ -1,4 +1,4 @@
-﻿namespace LargeFileUpload.Client;
+﻿namespace LargeFileUpload.Client.Services;
 
 public class FileUploadService
 {
@@ -12,7 +12,7 @@ public class FileUploadService
     }
 
         
-    public async Task ChunksUpload(IBrowserFile file)
+    public async Task UploadInChunks(IBrowserFile file)
     {
         var first = true;
         long  offset = 0;
@@ -34,7 +34,7 @@ public class FileUploadService
                 Offset = offset += _chunkSize,
                 First = first
             };
-            await _apiClient.UploadFileChunk(chunk);
+            await _apiClient.ChunkUpload(chunk);
             first = false;
         }
 
@@ -50,30 +50,12 @@ public class FileUploadService
                 Offset = offset,
                 First = first
             };
-            await _apiClient.UploadFileChunk(chunk);
+            await _apiClient.ChunkUpload(chunk);
         }
     }
     
-    public async Task<string> JsStream(string fileInputElementId)
-    {
-        try
-        {
-            var response = await _apiClient.UploadAsync(fileInputElementId);
-
-            if (response.Status == ResponseStatus.Error)
-            {
-                NotifyErrorOccurred(this, "UploadBadRequest");
-                return null;
-            }
-
-            NotifyFileUploaded(this);
-            return response.FileName;
-        }
-        catch
-        {
-            NotifyErrorOccurred(this, "GenericError");
-            return null;
-        }
-
+    public async Task JsFileStream(string fileInputElementId)
+    { 
+        await _apiClient.FileStream(fileInputElementId); 
     }
 }

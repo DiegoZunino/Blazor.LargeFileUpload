@@ -1,26 +1,31 @@
 using System.Net.Http.Json;
-using LargeFileUpload.Shared;
+using LargeFileUpload.Client.Interop;
 
 namespace LargeFileUpload.Client.ApiClients;
 
 public class FileUploadClient
 {
     private readonly HttpClient _httpclient;
+    private readonly FileUploadJsInterop _fileUploadJsInterop;
 
-    public FileUploadClient(HttpClient _httpclient)
+    public FileUploadClient(HttpClient httpclient, FileUploadJsInterop fileUploadJsInterop)
     {
-        this._httpclient = _httpclient;
+        _httpclient = httpclient;
+        _fileUploadJsInterop = fileUploadJsInterop;
     }
 
-    public async Task UploadFileChunk(FileChunk FileChunk)
+    public async Task ChunkUpload(FileChunk FileChunk)
     {
         var result = await _httpclient.PostAsJsonAsync("fileupload/chunk", FileChunk);
         result.EnsureSuccessStatusCode();
     }
     
-    public async Task<FileUploadResponse> UploadAsync(string fileInputElementId)
+    public async Task FileStream(string fileInputElementId)
     {
-        await _fileUploadJsInterop.Init(token.Value);
-        return await _fileUploadJsInterop.UploadFile(fileInputElementId);
+        var result = await _fileUploadJsInterop.FileStream(fileInputElementId);
+        if (result.StatusCode != 200)
+        {
+            throw new HttpRequestException();
+        }
     }
 }

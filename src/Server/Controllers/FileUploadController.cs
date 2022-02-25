@@ -12,7 +12,7 @@ public class FileUploadController : ControllerBase
     }
 
     [HttpPost("chunk")]
-    public async Task<IActionResult> UploadFileChunk([FromBody] FileChunk request)
+    public async Task<IActionResult> ChunkUpload([FromBody] FileChunk request)
     {
         var fileName = Path.Combine(_filePath, request.FileName);
         if (request.First && System.IO.File.Exists(fileName))
@@ -22,20 +22,36 @@ public class FileUploadController : ControllerBase
         await using var stream = System.IO.File.OpenWrite(fileName);
         stream.Seek(request.Offset, SeekOrigin.Begin);
         stream.Write(request.Data, 0, request.Data.Length);
-
-        return Ok();
+        return StatusCode(500);
     }
 
-    [HttpGet("stream")]
+    [HttpPost("stream")]
     [RequestSizeLimit(long.MaxValue)]
-    public async Task<IActionResult> StreamedUpload()
+    [DisableFormValueModelBinding]
+    public async Task<IActionResult> FileStream()
     {
-        return Ok(new {message = "STREAMED"});
-    }
+        if (MultipartRequestHelper.IsMultipartContentType(Request.ContentType))
+        {
+            try
+            {
+                var boundary = MultipartRequestHelper.GetBoundary(MediaTypeHeaderValue.Parse(Request.ContentType));
+                var reader = new MultipartReader(boundary, HttpContext.Request.Body);
+                var section = await reader.ReadNextSectionAsync();
+                var contentDisposition = MultipartRequestHelper.GetContentDisposition(section);
 
-    [HttpGet("standard")]
-    public async Task<IActionResult> StandardUpload()
-    {
-        return Ok(new {message = "STANDARD"});
+                if (MultipartRequestHelper.HasAllowedFileContentDisposition(contentDisposition))
+                {
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(contentDisposition.FileName.Value).ToLowerInvariant()}";
+                    await using var targetStream = System.IO.File.Create(Path.Combine(_filePath, fileName));
+                    await section.Body.CopyToAsync(targetStream);
+                    return StatusCode(500);
+                }
+            }
+            catch (InvalidDataException ex)
+            {
+                return BadRequest();
+            }
+        }
+        return BadRequest();
     }
 }

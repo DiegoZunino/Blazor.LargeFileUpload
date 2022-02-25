@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using LargeFileUpload.Client.Services
 @inject FileUploadService FileUploadService
 
 <section>
@@ -7,7 +8,7 @@
     </div>
     <div class="row">
         <div class="col-3">
-            <InputFile class="form-control" disabled="@_chunksUploading" OnChange="OnChunksUploadInputChange"/>
+            <InputFile class="form-control" disabled="@_chunksUploading" OnChange="OnUploadInChunksInputChange"/>
         </div>
         @if(_chunksUploading)
         {
@@ -24,9 +25,9 @@
     </div>
     <div class="row" >
         <div class="col-3">
-            <InputFile class="form-control" id="@_jsStreamInputElementId" disabled="@_jsStreaming" OnChange="OnJsStreamInputChange"/>
+            <InputFile class="form-control" id="@_jsFileStreamInputElementId" disabled="@_fileStreaming" OnChange="OnJsFileStreamInputChange"/>
         </div>
-        @if(_jsStreaming)
+        @if(_fileStreaming)
         {
             <div class="col">
                 <div class="spinner-border text-success" style="width: 2.5rem; height: 2.5rem;" role="status">
@@ -37,27 +38,61 @@
     </div>
 </section>
 
+<section style="margin-top: 20px;">
+    @if (_statusMessage != null)
+    {
+        <div class="row">
+            <div class=" col-3 alert @_statusMessageElementClass" role="alert">
+                @_statusMessage
+            </div>
+        </div>
+    }
+</section>
+
+
 @code
 {
     private bool _chunksUploading;
-    private bool _jsStreaming;
-    private readonly string _jsStreamInputElementId = "js-stream";
+    private bool _fileStreaming;
+    private string _statusMessage;
+    private string _statusMessageElementClass;
+    private readonly string _jsFileStreamInputElementId = "js-file-stream";
 
-    async Task OnChunksUploadInputChange(InputFileChangeEventArgs args)
+    async Task OnUploadInChunksInputChange(InputFileChangeEventArgs args)
     {
         _chunksUploading = true;
-        await FileUploadService.ChunksUpload(args.File);
+        _statusMessageElementClass = "alert-success";
+        _statusMessage = null;
+        
+        try
+        {
+            await FileUploadService.UploadInChunks(args.File);
+            _statusMessage = "File has been successfully uploaded.";
+        }
+        catch
+        {
+            _statusMessageElementClass = "alert-danger";
+            _statusMessage = "Oops, something went wrong.";
+        }
         _chunksUploading = false;
     }
-    
-    async Task OnJsStreamInputChange(InputFileChangeEventArgs args)
-    {
-        _jsStreaming = true;
-        await FileUploadService.JsStream(_jsStreamInputElementId);
-        _jsStreaming = false;
-    }
-    
-    
-    
 
+    async Task OnJsFileStreamInputChange(InputFileChangeEventArgs args)
+    {
+        _fileStreaming = true;
+        _statusMessageElementClass = "alert-success";
+        _statusMessage = null;
+
+        try
+        {
+            await FileUploadService.JsFileStream(_jsFileStreamInputElementId);
+            _statusMessage = "File has been successfully uploaded.";
+        }
+        catch
+        {
+            _statusMessageElementClass = "alert-danger";
+            _statusMessage = "Oops, something went wrong.";
+        }
+        _fileStreaming = false;
+    }
 }
