@@ -15,9 +15,5 @@
     <ProjectReference Include="..\Shared\LargeFileUpload.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Files" />
-  </ItemGroup>
-
 
 </Project>

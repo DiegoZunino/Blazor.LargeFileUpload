@@ -22,7 +22,7 @@ public class FileUploadController : ControllerBase
         await using var stream = System.IO.File.OpenWrite(fileName);
         stream.Seek(request.Offset, SeekOrigin.Begin);
         stream.Write(request.Data, 0, request.Data.Length);
-        return StatusCode(500);
+        return Ok();
     }
 
     [HttpPost("stream")]
@@ -44,7 +44,7 @@ public class FileUploadController : ControllerBase
                     var fileName = $"{Guid.NewGuid()}{Path.GetExtension(contentDisposition.FileName.Value).ToLowerInvariant()}";
                     await using var targetStream = System.IO.File.Create(Path.Combine(_filePath, fileName));
                     await section.Body.CopyToAsync(targetStream);
-                    return StatusCode(500);
+                    return Ok();
                 }
             }
             catch (InvalidDataException ex)
