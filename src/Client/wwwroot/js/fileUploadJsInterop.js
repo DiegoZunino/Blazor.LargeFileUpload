@@ -4,8 +4,7 @@ export async function fileStream (fileInputElementId) {
   let fileInputElement =  document.getElementById(fileInputElementId);
   let data = new FormData();
   data.append('File', fileInputElement.files[0])
-  let status = await AJAXSubmit('/fileupload/stream', data).then(response => response.status);
-  return { statusCode : status};
+  return { statusCode : await AJAXSubmit('/fileupload/stream', data).then(response => response.status) };
 }
 
 export async function AJAXSubmit (url, data) {

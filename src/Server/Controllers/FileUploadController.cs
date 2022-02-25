@@ -4,22 +4,22 @@ namespace LargeFileUpload.Server.Controllers;
 [Route("[controller]")]
 public class FileUploadController : ControllerBase
 {
-    private readonly string _filePath;
+    private readonly string _dirName;
 
     public FileUploadController(IConfiguration configuration)
     {
-        _filePath = configuration["FileUpload:FilePath"];
+        _dirName = configuration["FileUpload:DirName"];
     }
 
     [HttpPost("chunk")]
     public async Task<IActionResult> ChunkUpload([FromBody] FileChunk request)
     {
-        var fileName = Path.Combine(_filePath, request.FileName);
-        if (request.First && System.IO.File.Exists(fileName))
+        var filePath = Path.Combine(_dirName, request.FileName);
+        if (request.First && System.IO.File.Exists(filePath))
         {
-            System.IO.File.Delete(fileName);
+            System.IO.File.Delete(filePath);
         }
-        await using var stream = System.IO.File.OpenWrite(fileName);
+        await using var stream = System.IO.File.OpenWrite(filePath);
         stream.Seek(request.Offset, SeekOrigin.Begin);
         stream.Write(request.Data, 0, request.Data.Length);
         return Ok();
@@ -42,7 +42,7 @@ public class FileUploadController : ControllerBase
                 if (MultipartRequestHelper.HasAllowedFileContentDisposition(contentDisposition))
                 {
                     var fileName = $"{Guid.NewGuid()}{Path.GetExtension(contentDisposition.FileName.Value).ToLowerInvariant()}";
-                    await using var targetStream = System.IO.File.Create(Path.Combine(_filePath, fileName));
+                    await using var targetStream = System.IO.File.Create(Path.Combine(_dirName, fileName));
                     await section.Body.CopyToAsync(targetStream);
                     return Ok();
                 }

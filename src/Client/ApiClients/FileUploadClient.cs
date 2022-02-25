@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using LargeFileUpload.Client.Interop;
 
 namespace LargeFileUpload.Client.ApiClients;
 
