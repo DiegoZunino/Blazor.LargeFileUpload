@@ -31,13 +31,13 @@ public class FileUploadService
             {
                 Data = buffer,
                 FileName = fileName,
-                Offset = offset += _chunkSize,
+                Offset = offset,
                 First = first
             };
             await _apiClient.ChunkUpload(chunk);
             first = false;
         }
-
+        offset += _chunkSize;
         if (remainder > 0)
         {
             var buffer = new byte[remainder];
